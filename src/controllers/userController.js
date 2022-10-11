@@ -28,7 +28,7 @@ const createUser = async (req, res) => {
         if (usedPhone)
             return res.status(400).send({ status: false, message: `This ${phone} phone number is already in use` })
         
-        //-------------------password hashing-------------------
+        //-------------------password hashing------------------->
         const hashPassword = await bcrypt.hash(password, 10);
         req.body.password = hashPassword
 
