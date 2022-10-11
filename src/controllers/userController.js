@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import aws from 'aws-sdk';
 import userModel from "../models/userMosel.js";
-// import { isValidObjectId, dataValidation, isValidEmail, isValidPass } from '../util/validator.js';
+import { isValidEmail, isValidPassword, isValid } from '../util/validator.js';
 
 
 //======================================createUser===============================================>
@@ -13,24 +13,27 @@ const createUser = async (req, res) => {
         let { fname, lname, email, profileImage, phone, password, address } = data
 
         if (Object.keys(data).length === 0)
-            return res.status(400).send({ status: false, message: "Please provide user details" })
+            return res.status(400).send({ status: false, message: `Please provide user details` })
 
         if (!files[0])
-            return res.status(400).send({ status: false, message: "Please provide image file" })
+            return res.status(400).send({ status: false, message: `Please provide image file` })
 
         profileImage = await aws.uploadFile(files[0])
 
-        const usedEmail = await userModel.findOne({ email: email })
+        const usedEmail = await userModel.findOne({ email })
         if (usedEmail)
             return res.status(400).send({ status: false, message: `This ${email} Email-Id is already in use` })
 
-        const usedPhone = await userModel.findOne({ phone: phone })
+        const usedPhone = await userModel.findOne({ phone })
         if (usedPhone)
             return res.status(400).send({ status: false, message: `This ${phone} phone number is already in use` })
+        
+        //-------------------password hashing-------------------
+        const hashPassword = await bcrypt.hash(password, 10);
+        req.body.password = hashPassword
 
         const saveUser = await userModel.create(data)
-        return res.status(201).send({ status: true, message: "User created successfully!!", data: saveUser })
-
+        return res.status(201).send({ status: true, message: `User created successfully!!`, data: saveUser })
 
     } catch (err) {
         return res.status(500).send({ status: false, message: err })
@@ -41,10 +44,39 @@ const createUser = async (req, res) => {
 //======================================login=============================================>
 const login = async (req, res) => {
     try {
+        const data = req.body
 
-    }
-    catch (err) {
-        res.status(500).send({ status: false, error: err.message });
+        if (Object.keys(data).length == 0)
+            return res.status.send({ status: false, message: `Please give Data` })
+
+        const reqBody = ["email", "password"]
+
+        for (element of reqBody)
+            if (!isValid(req.body[element]))
+                return res.status(400).send({ status: false, message: `This ${element} is required and be in valid format` })
+
+        if (!isValidEmail(email))
+            return res.status(400).send({ status: false, message: `EmailId is invalid` })
+
+        if (!isValidPassword(password))
+            return res.status(400).send({ status: false, message: `Password is invalid` })
+
+        //--------------------------------exitsUser----------------------------------->
+        const existUser = await userModel.findOne({ email });
+        if (!existUser)
+            return res.status(401).send({ status: false, message: `Please register first. ` });
+
+        // ------------------------------token generation----------------------------->
+        const payload = { userId: existUser._id, iat: Math.floor(Date.now() / 1000) };
+
+        const token = jwt.sign(payload, 'group1', { expiresIn: '365d' });
+
+        // --------------------------------response-------------------------------------->
+        res.status(200).send({ status: true, message: `Login Successful.`, data: { userId: existUser._id, token: token } });
+
+
+    } catch (err) {
+        return res.status(500).send({ status: false, message: err.message })
     }
 };
 
@@ -95,7 +127,7 @@ const login = async (req, res) => {
 //         const token = jwt.sign(payload, '', { expiresIn: '365d' });
 
 //         // --------------------------------response-------------------------------------->
-//         return res.status(200).send({ status: true, message: 'Login Successful.', data: { userId: existUser._id, token: token } });
+//          res.status(200).send({ status: true, message: 'Login Successful.', data: { userId: existUser._id, token: token } });
 
 //     }
 //     catch (err) {
