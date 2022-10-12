@@ -1,139 +1,217 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import aws from 'aws-sdk';
-import userModel from "../models/userMosel.js";
-import { isValidEmail, isValidPassword, isValid } from '../util/validator.js';
+import userModel from '../models/userMosel.js';
+import { isValidName, isValidEmail, isValidFile, isValidNumber, isValidPass, isValidTxt, isValidPin, isValidObjectId } from '../util/validator.js';
+import { uploadFile, } from '../aws/aws.js';
 
 
 //======================================createUser===============================================>
 const createUser = async (req, res) => {
     try {
-        let data = req.body;
-        let files = req.files
-        let { fname, lname, email, profileImage, phone, password, address } = data
+        const reqBody = req.body;
+        const file = req.files;
 
-        if (Object.keys(data).length === 0)
-            return res.status(400).send({ status: false, message: `Please provide user details` })
+        const { fname, lname, email, profileImage, phone, password, address } = reqBody;
 
-        if (!files[0])
-            return res.status(400).send({ status: false, message: `Please provide image file` })
+        //------------------------------body validation--------------------------------->
+        if (Object.keys(reqBody).length === 0)
+            return res.status(400).send({ status: false, message: `Please provide user details` });
 
-        profileImage = await aws.uploadFile(files[0])
+        if (Object.keys(reqBody).length > 7)
+            return res.status(400).send({ status: false, message: `You cam't add extra field` });
 
-        const usedEmail = await userModel.findOne({ email })
-        if (usedEmail)
-            return res.status(400).send({ status: false, message: `This ${email} Email-Id is already in use` })
+        //------------------------------body validation--------------------------------->
+        if (!file[0])
+            return res.status(400).send({ status: false, message: `Please provide image file` });
 
-        const usedPhone = await userModel.findOne({ phone })
-        if (usedPhone)
-            return res.status(400).send({ status: false, message: `This ${phone} phone number is already in use` })
-        
+        //------------------------------fname validation--------------------------------->
+        if (!fname)
+            return res.status(400).send({ status: false, message: `fname is required.` });
+
+        if (!isValidName(fname))
+            return res.status(400).send({ status: false, message: ` '${fname}' this fname is not valid.` });
+
+        //------------------------------lname validation--------------------------------->
+        if (!lname)
+            return res.status(400).send({ status: false, message: `lname is required.` });
+
+        if (!isValidName(lname))
+            return res.status(400).send({ status: false, message: ` '${lname}' this lname is not valid.` });
+
+        //------------------------------email validation--------------------------------->
+        if (!email)
+            return res.status(400).send({ status: false, message: `email is required.` });
+
+        if (!isValidEmail(email))
+            return res.status(400).send({ status: false, message: ` '${email}' this email is not valid.` });
+
+        //------------------------------finding duplicate email------------------------------>
+        const duplicateEmail = await userModel.findOne({ email });
+
+        if (duplicateEmail)
+            return res.status(400).send({ status: false, message: `Please login.` });
+
+        //------------------------------profileImage validation--------------------------------->
+        if (!profileImage)
+            return res.status(400).send({ status: false, message: `profileImage is required.` });
+
+        if (!isValidFile(profileImage))
+            return res.status(400).send({ status: false, message: `Enter formate jpeg/jpg/png only.` });
+
+        //------------------------------phone validation--------------------------------->
+        if (!phone)
+            return res.status(400).send({ status: false, message: `phone is required.` });
+
+        if (!isValidNumber(phone))
+            return res.status(400).send({ status: false, message: ` '${phone}' this email is not valid.` });
+
+        //------------------------------finding duplicate phone------------------------------>
+        const duplicatePhone = await userModel.findOne({ phone });
+
+        if (duplicatePhone)
+            return res.status(400).send({ status: false, message: `Please login.` });
+
+        //------------------------------password validation--------------------------------->
+        if (!password)
+            return res.status(400).send({ status: false, message: `password is required.` });
+
+        if (!isValidPass(password))
+            return res.status(400).send({ status: false, message: `Use this combination 8-15 char & use 0-9,A-Z,a-z & special char.` });
+
+        //*-----------##########----------address validation----------##############---------->
+        if (!address)
+            return res.status(400).send({ status: false, message: `address is required.` });
+
+        reqBody.address = JSON.parse(address)
+
+        // if (typeof address !== 'object' || Array.isArray(address) || Object.keys(address).length == 0)
+        //     return res.status(400).send({ status: false, message: `ddress should be an object` })
+
+        const { shipping, billing } = reqBody.address;
+
+        //*----------//--------//--------shipping validation---------//----------//--------->
+        if (!shipping)
+            return res.status(400).send({ status: false, message: `shipping is required.` })
+
+        //-------------------------------street validation--------------------------------->
+        if (!shipping.street)
+            return res.status(400).send({ status: false, message: `street is required.` })
+
+        if (!isValidTxt(shipping.street))
+            return res.status(400).send({ status: false, message: ` '${shipping.street}' this street is not valid.` })
+
+        //-------------------------------city validation--------------------------------->
+        if (!shipping.city)
+            return res.status(400).send({ status: false, message: `city is required.` }); isValidPin
+
+        if (!isValidTxt(shipping.city))
+            return res.status(400).send({ status: false, message: ` '${shipping.city}' this city is not valid.` })
+
+        //-------------------------------pincode validation--------------------------------->
+        if (!shipping.pincode)
+            return res.status(400).send({ status: false, message: `pincode is required.` });
+
+        if (!isValidPin(shipping.pincode))
+            return res.status(400).send({ status: false, message: ` '${shipping.pincode}' this pincode is not valid.` })
+
+        //*----------//--------//--------billing validation---------//----------//--------->
+        if (!billing)
+            return res.status(400).send({ status: false, message: `billing is required.` })
+
+        //-------------------------------street validation--------------------------------->
+        if (!billing.street)
+            return res.status(400).send({ status: false, message: `street is required.` })
+
+        if (!isValidTxt(billing.street))
+            return res.status(400).send({ status: false, message: ` '${billing.street}' this street is not valid.` })
+
+        //-------------------------------city validation--------------------------------->
+        if (!billing.city)
+            return res.status(400).send({ status: false, message: `city is required.` }); isValidPin
+
+        if (!isValidTxt(billing.city))
+            return res.status(400).send({ status: false, message: ` '${billing.city}' this city is not valid.` })
+
+        //-------------------------------pincode validation--------------------------------->
+        if (!billing.pincode)
+            return res.status(400).send({ status: false, message: `pincode is required.` });
+
+        if (!isValidPin(billing.pincode))
+            return res.status(400).send({ status: false, message: ` '${billing.pincode}' this pincode is not valid.` })
+
+        //------------------aws file uploading------------------->
+        const uploadedFileUrl = await uploadFile(file[0]);
+
+        //----------profileImage url setting in request---------->
+        reqBody.profileImage = uploadedFileUrl
+
         //-------------------password hashing------------------->
         const hashPassword = await bcrypt.hash(password, 10);
-        req.body.password = hashPassword
+        reqBody['password'] = hashPassword
+        // req.body.password = hashPassword
 
-        const saveUser = await userModel.create(data)
-        return res.status(201).send({ status: true, message: `User created successfully!!`, data: saveUser })
+        const saveUser = await userModel.create(reqBody);
+        res.status(201).send({ status: true, message: `User created successfully!!`, data: saveUser });
 
     } catch (err) {
-        return res.status(500).send({ status: false, message: err })
+        return res.status(500).send({ status: false, message: err });
     }
 };
 
 
-//======================================login=============================================>
+//=========================================login================================================>
 const login = async (req, res) => {
     try {
-        const data = req.body
+        const reqBody = req.body;
+        const { email, password } = reqBody;
 
-        if (Object.keys(data).length == 0)
-            return res.status.send({ status: false, message: `Please give Data` })
+        //------------------------------body validation----------------------------------->
+        if (!dataValidation(reqBody))
+            return res.status(400).send({ status: false, message: `Please fill the data.` })
 
-        const reqBody = ["email", "password"]
+        if (Object.keys(reqBody).length > 2)
+            return res.status(400).send({ status: false, message: `You can't add extra field.` })
 
-        for (element of reqBody)
-            if (!isValid(req.body[element]))
-                return res.status(400).send({ status: false, message: `This ${element} is required and be in valid format` })
+        //------------------------------email validation--------------------------------->
+        if (!email)
+            return res.status(400).send({ status: false, message: `email is required.` });
 
         if (!isValidEmail(email))
-            return res.status(400).send({ status: false, message: `EmailId is invalid` })
+            return res.status(400).send({ status: false, message: ` '${email}' this email is not valid.` });
 
-        if (!isValidPassword(password))
-            return res.status(400).send({ status: false, message: `Password is invalid` })
+        //------------------------------password validation--------------------------------->
+
+        if (!password)
+            return res.status(400).send({ status: false, message: `password is required.` });
+
+        if (!isValidPass(password))
+            return res.status(400).send({ status: false, message: `Password should be 8-15 char & use 0-9,A-Z,a-z & special char this combination.` });
 
         //--------------------------------exitsUser----------------------------------->
         const existUser = await userModel.findOne({ email });
+
         if (!existUser)
-            return res.status(401).send({ status: false, message: `Please register first. ` });
+            return res.status(401).send({ status: false, message: 'Please register first.' });
+
+        // ---------------------------decoding hash password--------------------------->
+        const matchPass = bcrypt.compare(password, existUser.password);
+
+        if (!matchPass)
+            return res.status(400).send({ status: false, message: 'Password is wrong.' })
 
         // ------------------------------token generation----------------------------->
         const payload = { userId: existUser._id, iat: Math.floor(Date.now() / 1000) };
 
-        const token = jwt.sign(payload, 'group1', { expiresIn: '365d' });
+        const token = jwt.sign(payload, '', { expiresIn: '365d' });
 
         // --------------------------------response-------------------------------------->
-        res.status(200).send({ status: true, message: `Login Successful.`, data: { userId: existUser._id, token: token } });
+        res.status(200).send({ status: true, message: 'Login Successful.', data: { userId: existUser._id, token: token } });
 
-
-    } catch (err) {
-        return res.status(500).send({ status: false, message: err.message })
+    }
+    catch (err) {
+        res.status(500).send({ status: false, error: err.message });
     }
 };
-
-
-// //=========================================login================================================>
-// const login = async (req, res) => {
-//     try {
-//         const reqBody = req.body;
-//         const { email, password } = reqBody;
-
-//         //------------------------------body validation----------------------------------->
-//         if (!dataValidation(reqBody))
-//             return res.status(400).send({ status: false, message: `Please fill the data.` })
-
-//         if (Object.keys(reqBody).length > 2)
-//             return res.status(400).send({ status: false, message: `You can't add extra field.` })
-
-//         //------------------------------email validation--------------------------------->
-//         if (!email)
-//             return res.status(400).send({ status: false, message: `email is required.` });
-
-//         if (!isValidEmail(email))
-//             return res.status(400).send({ status: false, message: ` '${email}' this email is not valid.` });
-
-//         //------------------------------password validation--------------------------------->
-
-//         if (!password)
-//             return res.status(400).send({ status: false, message: `password is required.` });
-
-//         if (!isValidPass(password))
-//             return res.status(400).send({ status: false, message: `Password should be 8-15 char & use 0-9,A-Z,a-z & special char this combination.` });
-
-//         //--------------------------------exitsUser----------------------------------->
-//         const existUser = await userModel.findOne({ email });
-
-//         if (!existUser)
-//             return res.status(401).send({ status: false, message: 'Please register first.' });
-
-//         // ---------------------------decoding hash password--------------------------->
-//         const matchPass = bcrypt.compare(password, existUser.password);
-
-//         if (!matchPass)
-//             return res.status(400).send({ status: false, message: 'Password is wrong.' })
-
-//         // ------------------------------token generation----------------------------->
-//         const payload = { userId: existUser._id, iat: Math.floor(Date.now() / 1000) };
-
-//         const token = jwt.sign(payload, '', { expiresIn: '365d' });
-
-//         // --------------------------------response-------------------------------------->
-//          res.status(200).send({ status: true, message: 'Login Successful.', data: { userId: existUser._id, token: token } });
-
-//     }
-//     catch (err) {
-//         res.status(500).send({ status: false, error: err.message });
-//     }
-// };
 
 
 //========================================gateUser===============================================>
