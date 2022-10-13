@@ -16,8 +16,8 @@ const isValidEmail = (email) => {
 
 //---------------------isValidFile------------------>
 const isValidFile = (img) => {
-    if (/(\/*\.(?:png|gif|webp|jpeg|jpg))/.test(img))
-        return true
+    const regex = /(\/*\.(?:png|gif|webp|jpeg|jpg))/.test(img)
+    return regex
 }
 //-------------------------------------isValidPwd------------------------------------->
 const isValidPass = (password) => {
@@ -34,8 +34,8 @@ const isValidNumber = (phone) => {
 
 //---------------------------isValidTxt-------------------------->
 const isValidTxt = (txt) => {
-    if (/^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z]*)*$/.test(txt))
-        return true
+    const regex = /^[A-Za-z0-9 ]{2,}$/.test(txt)
+    return regex
 }
 
 //----------------------isValidNumber----------------------->
@@ -49,4 +49,29 @@ const isValidObjectId = (objectId) => {
     return mongoose.Types.ObjectId.isValid(objectId)
 }
 
-export { isValidName, isValidEmail, isValidFile, isValidPass, isValidNumber, isValidTxt, isValidPin, isValidObjectId };
+
+
+const isValid = (value) => {
+    if (!value) return false
+    if (typeof value === "undefined" || typeof value === "null" || typeof value === "number") return false
+    if (typeof value === "string" && value.trim().length === 0) return false
+    return true
+}
+
+const isValidPrice = (value) => {
+    if (!value) return false
+    return /^[1-9]\d{0,7}(?:\.\d{1,4})?$/.test(value)
+}
+
+const isBoolean = (value) => {
+    if (value == "true" || value == "false") { return true }
+    return false
+}
+
+const isValidString = (value) => {
+    if (typeof value === "undefined" || typeof value === "null" || typeof value === "number") return false
+    if (typeof value === "string" && value.trim().length === 0) return false
+    return true
+}
+
+export { isValidName, isValidEmail, isValidFile, isValidPass, isValidNumber, isValidTxt, isValidPin, isValidObjectId, isValid, isValidPrice, isBoolean, isValidString };
