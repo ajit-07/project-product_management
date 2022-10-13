@@ -1,6 +1,8 @@
 import productModel from '../models/productModel.js';
 import { isValidObjectId, isValid, isValidPrice, isBoolean, isValidString } from '../util/validator.js';
 // import { isValidName, isValidEmail, isValidFile, isValidNumber, isValidPass, isValidTxt, isValidPin, isValidObjectId } from '../util/validator.js';
+import getSymbolFromCurrency from 'currency-symbol-map'
+import { uploadFile } from '../aws/aws.js';
 
 
 /*
@@ -17,18 +19,18 @@ installments
 
 //======================================createProduct=============================================>
 const createProduct = async (req, res) => {
-    try {
+    
         const file = req.files;
-        const reqBody = req.body;
+        const data = req.body;
 
         //------------------------------body validation--------------------------------->
-        if (Object.keys(reqBody).length === 0)
+        if (Object.keys(data).length === 0)
             return res.status(400).send({ status: false, message: `Please provide product details` });
 
-        if (Object.keys(reqBody).length > 12)
+        if (Object.keys(data).length > 12)
             return res.status(400).send({ status: false, message: `You cam't add extra field` });
 
-        const { title, description, price, currencyId, currencyFormat, isFreeShipping, style, availableSizes, installments } = reqBody
+        const { title, description, price, currencyId, currencyFormat, isFreeShipping, style, availableSizes, installments } = data
 
         if (!isValid(title))
             return res.status(400).send({ status: false, message: `Title is required and should be a valid string.` })
@@ -52,9 +54,9 @@ const createProduct = async (req, res) => {
         if (!currencyFormat)
             return res.status(400).send({ status: false, message: `Please enter valid Indian currency Id (INR) to get the currency format.` })
 
-        currencyFormat = getSymbolFromCurrency('INR')
-        data['currencyFormat'] = currencyFormat
-        console.log(currencyFormat)
+        const symbol = getSymbolFromCurrency('INR')
+        data['currencyFormat'] = symbol
+        console.log(symbol)
 
         if (isFreeShipping) {
             if (!isBoolean(isFreeShipping))
@@ -80,7 +82,7 @@ const createProduct = async (req, res) => {
             data['availableSizes'] = sizeArray
         }
         if (installments) {
-            if (!(!isNaN(Number(installments)))) return res.status(400).send({ status: false, message: "Installments should be a valid number" })
+            if (isNaN(Number(installments))) return res.status(400).send({ status: false, message: "Installments should be a valid number" })
         }
 
         //if (!(req.body.productImage)) return res.status(400).send({ status: false, message: "Product image is required" })
@@ -92,10 +94,7 @@ const createProduct = async (req, res) => {
 
         const saveProduct = await productModel.create(data)
         return res.status(201).send({ status: true, message: "Product created successfully", data: saveProduct })
-    }
-    catch (err) {
-        res.status(500).send({ status: false, error: err.message });
-    }
+    
 };
 
 
