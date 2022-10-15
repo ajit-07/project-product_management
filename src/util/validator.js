@@ -53,7 +53,7 @@ const isValidObjectId = (objectId) => {
 
 const isValid = (value) => {
     if (!value) return false
-    if (typeof value === "undefined" || typeof value === "null" || typeof value === "number") return false
+    if (typeof value === "undefined" || typeof value === "null" ) return false
     if (typeof value === "string" && value.trim().length === 0) return false
     return true
 }
