@@ -167,7 +167,9 @@ const updateProduct = async (req, res) => {
     try {
         let file = req.files
         let productId = req.params.productId;
+
         if (!productId) return res.status(400).send({ status: false, message: "Product id is required in path params" })
+
         if (!isValidObjectId(productId)) return res.status(400).send({ status: false, message: "Product id should be valid mongoose type object Id" })
 
         const productExist = await productModel.findOne({ _id: productId })
@@ -175,7 +177,7 @@ const updateProduct = async (req, res) => {
 
         if (productExist.isDeleted === true) return res.status(400).send({ status: false, message: "Product is already deleted+1" })
 
-        if (Object.keys(req.body).length === 0) return res.status(400).send({ status: false, message: "No data found to be updated,please enter data to update" })
+        if (Object.keys(req.body).length === 0 && !(file && file.length)) return res.status(400).send({ status: false, message: "No data found to be updated,please enter data to update" })
 
         const { title, description, price, currencyId, currencyFormat, isFreeShipping, style, availableSizes, installments, productImage, ...extra } = req.body
 
@@ -221,13 +223,12 @@ const updateProduct = async (req, res) => {
         }
 
 
-        if (file && file.length) {
-            if (!(file && file.length)) return res.status(400).send({ status: false, message: "Product image is required,please upload a image file" })
-
+        if (req.files && req.files.length > 0) {
             let uploadedFileUrl = await uploadFile(file[0])
             obj['productImage'] = uploadedFileUrl
             console.log(uploadedFileUrl)
         }
+
         obj = { $set: obj }
         if (availableSizes) { //can use isvalid function for this also
             let sizeArray = availableSizes.toUpperCase().split(',').map(x => x.trim())
