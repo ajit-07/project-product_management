@@ -98,7 +98,7 @@ const createProduct = async (req, res) => { //DONE CREATE PRODUCT FINAL (JUST CH
 
 
 //======================================getProducts=============================================>
-const getProducts = async (req, res) => {
+const getProducts = async (req, res) => { //DONE FINAL CHECK
     try {
         const data = req.query
         let { name, priceGreaterThan, priceLessThan, size, priceSort, ...rest } = data
