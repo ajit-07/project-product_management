@@ -16,7 +16,7 @@ router.put('/user/:userId/profile', auth, updateUser);  //shayan
 //-------------FEATURE II - Product--------------->
 router.post('/products', createProduct);   //aj
 router.get('/products', getProducts);      //shayan
-router.get('/products', getProductById);   //shayan
+router.get('/products/:productId', getProductById);   //shayan
 router.put('/products/:productId', updateProduct);   //sa
 router.delete('/products/:productId', deleteProduct)     //shayan
 

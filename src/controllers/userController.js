@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import userModel from '../models/userMosel.js';
 import { isValidName, isValidEmail, isValidFile, isValidNumber, isValidPass, isValidTxt, isValidPin, isValidObjectId } from '../util/validator.js';
-import { uploadFile, } from '../aws/aws.js';
+import { uploadFile } from '../aws/aws.js';
 
 
 //======================================createUser===============================================>
@@ -236,9 +236,9 @@ const updateUser = async (req, res) => {
         let { fname, lname, email, phone, address, password } = reqBody;
         console.log(typeof reqBody)
         console.log(reqBody)
-        
+
         console.log(reqBody.profileImage)
-       
+
         //------------------------------------body validation---------------------------------------->
         if ((Object.keys(reqBody).length === 0 || reqBody.profileImage !== undefined) && (file.length === 0 || file[0].fieldname !== 'profileImage' || file === undefined))
             return res.status(400).send({ status: false, message: `Enter at least One Field to update.` })

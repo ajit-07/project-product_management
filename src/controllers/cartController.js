@@ -68,14 +68,6 @@ const createCart = async (req, res) => {
             return res.status(201).send({ status: true, message: "cart created successfully", data: saveCart })
         }
 
-
-
-
-
-
-
-
-
     }
     catch (err) {
         res.status(500).send({ status: false, error: err.message })
