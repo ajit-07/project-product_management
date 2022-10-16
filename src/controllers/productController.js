@@ -18,7 +18,7 @@ installments
 
 
 //======================================createProduct=============================================>
-const createProduct = async (req, res) => {
+const createProduct = async (req, res) => { //DONE CREATE PRODUCT FINAL (JUST CHECK IMAGE PART)
 
     const file = req.files;
     const data = req.body;
@@ -27,7 +27,7 @@ const createProduct = async (req, res) => {
     if (Object.keys(data).length === 0)
         return res.status(400).send({ status: false, message: `Please provide product details` });
 
-    const { title, description, price, currencyId, currencyFormat, isFreeShipping, style, availableSizes, installments, ...extra } = data
+    const { title, description, price, currencyId, currencyFormat, isFreeShipping, style, availableSizes, installments, productImage, ...extra } = data
 
     if (Object.keys(extra).length > 0) return res.status(400).send({ status: false, message: "Inavlid request body!!" })
 
@@ -45,7 +45,7 @@ const createProduct = async (req, res) => {
         return res.status(400).send({ status: false, message: `Currency id is required and should be a valid string.` })
 
     if (currencyId !== 'INR')
-        return res.status(400).send({ status: false, message: `NR should be the currency id.` })
+        return res.status(400).send({ status: false, message: `INR should be the currency id.` })
 
     if (!currencyFormat) return res.status(400).send({ status: false, message: `Please enter valid Indian currency Id (INR) to get the currency format.` })
     if (currencyFormat != 'INR' && currencyFormat != '₹') return res.status(400).send({ status: false, message: "Please enter a valid currency id or currency format i.e 'INR' or '₹'" })
@@ -78,11 +78,11 @@ const createProduct = async (req, res) => {
     }
     if (installments) {
         if (isNaN(Number(installments))) return res.status(400).send({ status: false, message: "Installments should be a valid number" })
+        if (Number(installments) < 1) return res.status(400).send({ status: false, message: "Installments can't be less than 1" })
     }
 
-    //if (!(req.body.productImage)) return res.status(400).send({ status: false, message: "Product image is required" })
 
-    if (!(file && file.length)) return res.status(400).send({ status: false, message: "No file found" })
+    if (!(file && file.length)) return res.status(400).send({ status: false, message: "ProductImage is required,Please upload a image file" })
 
     let uploadedFileUrl = await uploadFile(file[0])
     data['productImage'] = uploadedFileUrl
@@ -142,7 +142,7 @@ const getProducts = async (req, res) => {
 
 
 //======================================getProductById=============================================>
-const getProductById = async (req, res) => {
+const getProductById = async (req, res) => { //DONE FINAL CHECK
     try {
         const productId = req.params.productId
 
@@ -165,14 +165,15 @@ const getProductById = async (req, res) => {
 //======================================updateProduct=============================================>
 const updateProduct = async (req, res) => {
     try {
+        let file = req.files
         let productId = req.params.productId;
         if (!productId) return res.status(400).send({ status: false, message: "Product id is required in path params" })
         if (!isValidObjectId(productId)) return res.status(400).send({ status: false, message: "Product id should be valid mongoose type object Id" })
 
-        const productExist = await productModel.findById({ _id: productId })
+        const productExist = await productModel.findOne({ _id: productId })
         if (!productExist) return res.status(404).send({ status: false, message: "Product details from given product id not found" })
 
-        if (productExist.isDeleted === 'false') return res.status(400).send({ status: false, message: "Product is already deleted" })
+        if (productExist.isDeleted === true) return res.status(400).send({ status: false, message: "Product is already deleted+1" })
 
         if (Object.keys(req.body).length === 0) return res.status(400).send({ status: false, message: "No data found to be updated,please enter data to update" })
 
@@ -214,21 +215,21 @@ const updateProduct = async (req, res) => {
             if (!isValid(style)) return res.status(400).send({ status: false, message: "Style should be a valid string" })
             obj['style'] = style
         }
-        if (installments) {
+        if (installments) { //-ve values not handled
             if (isNaN(Number(installments))) return res.status(400).send({ status: false, message: "Installments should be a valid number" })
             obj['installments'] = installments
         }
 
 
-        if (productImage) {
-            let file = req.files
-            if (!(file && file.length)) return res.status(400).send({ status: false, message: "No file found" })
+        if (file && file.length) {
+            if (!(file && file.length)) return res.status(400).send({ status: false, message: "Product image is required,please upload a image file" })
 
             let uploadedFileUrl = await uploadFile(file[0])
             obj['productImage'] = uploadedFileUrl
+            console.log(uploadedFileUrl)
         }
         obj = { $set: obj }
-        if (availableSizes) {
+        if (availableSizes) { //can use isvalid function for this also
             let sizeArray = availableSizes.toUpperCase().split(',').map(x => x.trim())
             //console.log(sizeArray)
             for (let i = 0; i < sizeArray.length; i++) {
@@ -238,6 +239,7 @@ const updateProduct = async (req, res) => {
             }
             obj['$addToSet'] = { availableSizes: sizeArray }
         }
+        console.log(obj)
         const updatedPro = await productModel.findOneAndUpdate({ _id: productId, isDeleted: false }, obj, { new: true })
         return res.status(200).send({ status: true, message: "Product updated successfully!!", data: updatedPro })
 
@@ -251,7 +253,7 @@ const updateProduct = async (req, res) => {
 
 
 //======================================deleteProduct=============================================>
-const deleteProduct = async (req, res) => {
+const deleteProduct = async (req, res) => { //DONE FINAL CHECK
     try {
         const productId = req.params.productId;
 

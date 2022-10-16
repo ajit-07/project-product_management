@@ -52,14 +52,12 @@ const isValidObjectId = (objectId) => {
 
 
 const isValid = (value) => {
-    if (!value) return false
-    if (typeof value === "undefined" || typeof value === "null" ) return false
-    if (typeof value === "string" && value.trim().length === 0) return false
+    if (typeof value === "undefined" || typeof value === null) { return false }
+    if (typeof value === "string" && value.trim().length === 0) { return false }
     return true
 }
 
 const isValidPrice = (value) => {
-    if (!value) return false
     return /^[1-9]\d{0,7}(?:\.\d{1,4})?$/.test(value)
 }
 
