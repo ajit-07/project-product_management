@@ -54,7 +54,8 @@ const createCart = async (req, res) => {
                     productArray[i].quantity = newQuantity
                     cartExist.totalPrice = totPrice
                     await cartExist.save()
-                    return res.status(200).send({ status: true, message: "Success", data: cartExist })
+                    let response = await cartModel.findOne({ userId: userId }).populate('items.productId', { __v: 0, _id: 0, isDeleted: 0, createdAt: 0, deletedAt: 0, currencyId: 0, currencyFormat: 0, updatedAt: 0, availableSizes: 0 })
+                    return res.status(200).send({ status: true, message: "Success", data: response })
                 }
 
             }
@@ -62,7 +63,8 @@ const createCart = async (req, res) => {
             cartExist.totalPrice = cartExist.totalPrice + productExist.price
             cartExist.totalItems = cartExist.items.length
             await cartExist.save()
-            return res.status(200).send({ status: true, message: "Success", data: cartExist })
+            let response = await cartModel.findOne({ userId: userId }).populate('items.productId', { __v: 0, _id: 0, isDeleted: 0, createdAt: 0, deletedAt: 0, currencyId: 0, currencyFormat: 0, updatedAt: 0, availableSizes: 0 })
+            return res.status(200).send({ status: true, message: "Success", data: response })
 
         }
         let obj = {  //creation of cart for first time
