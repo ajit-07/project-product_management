@@ -4,14 +4,14 @@ import { createUser, login, gateUser, updateUser } from '../controllers/userCont
 import { createProduct, getProducts, getProductById, updateProduct, deleteProduct } from '../controllers/productController.js';
 import { createCart, updateCart, getCart, deleteCart } from '../controllers/cartController.js';
 import { createOrder, updateOrder } from '../controllers/orderController.js';
-import auth from '../middleware/auth.js';
+import {authenticate,authorization} from '../middleware/auth.js';
 
 
 //--------------FEATURE I - User---------------->
 router.post('/register', createUser);  //aj
 router.post('/login', login);          //sa
-router.post('/user/:userId/profile', auth, gateUser);  //shayan
-router.put('/user/:userId/profile', auth, updateUser);  //shayan
+router.post('/user/:userId/profile', authenticate, gateUser);  //shayan
+router.put('/user/:userId/profile', authenticate, updateUser);  //shayan
 
 //-------------FEATURE II - Product--------------->
 router.post('/products', createProduct);   //aj

@@ -1,44 +1,56 @@
 import jwt from 'jsonwebtoken';
-
-// const auth = async (req, res, next) => {
-//     try {
-//         const token = req.headers.authorization.slice(7,);
-//         console.log(token)
-
-//         if (!token)
-//             res.status(400).send({ status: false, message: `Token must be present.` })
-//         jwt.verify(token, 'group1', (err, decoded) => {
-//             if (err)
-//                 res.status(400).send({ status: false, message: `Authentication Failed!`, error: err.message })
-//             req['user'] = decoded.userId
-//             next()
-//         })
-//     }
-//     catch (err) {
-//         res.status(500).send({ status: false, error: err.message })
-//     }
-// }
+import mongoose from 'mongoose';
+import userMosel from '../models/userMosel.js';
+const ObjectId = mongoose.Types.ObjectId;
 
 
-const auth = async (req, res, next) => {
+
+const authenticate = async (req, res, next) => {
     try {
-        let token = req.headers.authorization
-        if (!token) return res.status(400).send({ status: false, message: "token must be present" });
+        let token = req.headers["authorization"]
+        if (!token) return res.status(401).send({ status: false.valueOf, message: "Token is required" })
 
-        token = token.split(' ')[1];
+        token = token.split(" ")
+        //console.log(token)
+        token = token[1]
 
-        jwt.verify(token, 'group1', (err, decoded) =>{
-            if (err) 
-                return res.status(401).send({ status: false, message: err.message })
+        jwt.verify(token, 'group-1', (err, decodedToken) => {
+            if (err) {
+                //console.log(err.message)
+                let message = err.message === "jwt expired" ? "token is expired" : "token is invalid"
+                return res.status(401).send({ status: false, message: message })
 
-                req['user'] = decoded.userId
-                next()
+            }
+
+            req["user"] = decodedToken.userId;
+            return next();
         })
     }
+
     catch (err) {
+        return res.status(500).send({ staus: false, message: err.message })
+    }
+}
+
+const authorization = async (req, res) => {
+    try {
+
+        let userId = req.params.userId;
+
+        if (!ObjectId.isValid(userId)) return res.status(400).send({ status: false, message: "User id should be a valid type mongoose object Id" })
+
+        let userExist = await userMosel.findById(userId)
+        if (!userExist) return res.status(404).send({ status: false, message: "User not found for the given user Id" })
+
+
+        if (req['user'] !== userId) return res.status(403).send({ status: false, message: "Authorization failed" })
+        return next()
+
+    } catch (err) {
         return res.status(500).send({ status: false, message: err.message })
     }
 }
 
 
-export default auth;
+
+export { authenticate, authorization };
