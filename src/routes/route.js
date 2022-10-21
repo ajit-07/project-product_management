@@ -10,8 +10,8 @@ import {authenticate,authorization} from '../middleware/auth.js';
 //--------------FEATURE I - User---------------->
 router.post('/register', createUser);  //aj
 router.post('/login', login);          //sa
-router.post('/user/:userId/profile', authenticate, gateUser);  //shayan
-router.put('/user/:userId/profile', authenticate, updateUser);  //shayan
+router.post('/user/:userId/profile', authenticate,authorization, gateUser);  //shayan
+router.put('/user/:userId/profile', authenticate,authorization ,updateUser);  //shayan
 
 //-------------FEATURE II - Product--------------->
 router.post('/products', createProduct);   //aj
@@ -21,14 +21,14 @@ router.put('/products/:productId', updateProduct);   //sa
 router.delete('/products/:productId', deleteProduct)     //shayan
 
 //------------FEATURE III - cart--------------->
-router.post('/users/:userId/cart', createCart); //aj
-router.put('/users/:userId/cart', updateCart);  //bbbbb
-router.get('/users/:userId/cart', getCart);         //shayan  
+router.post('/users/:userId/cart',authenticate,authorization, createCart); //aj
+router.put('/users/:userId/cart',authenticate,authorization, updateCart);  //bbbbb
+router.get('/users/:userId/cart',authenticate,authorization, getCart);         //shayan  
 router.delete('/users/:userId/cart', deleteCart);   //shayan  
 
 //-------------FEATURE IV - Order--------------->
-router.post('/users/:userId/orders', createOrder); //sana
-router.put('/users/:userId/orders', updateOrder);  //bbbbb
+router.post('/users/:userId/orders',authenticate,authorization, createOrder); //sana
+router.put('/users/:userId/orders',authenticate,authorization, updateOrder);  //bbbbb
 
 
 export default router;

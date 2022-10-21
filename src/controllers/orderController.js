@@ -11,7 +11,7 @@ const createOrder = async (req, res) => {
         let userId = req.params.userId
         let data = req.body
 
-        //DEstructuring
+        //Destructuring
         let { cartId, cancellable, status } = data
 
 
@@ -148,7 +148,7 @@ const updateOrder = async (req, res) => {
             return res.status(400).send({ status: false, msg: "This Order is already deleted" })
         }
         if (existOrder.status === "completed") {
-            return res.status(400).send({ status: false, msg: "This Order completed can'nt be cancelled" })
+            return res.status(400).send({ status: false, msg: "This Order is already completed" })
         }
         if (existOrder.status === "canceled") {
             return res.status(400).send({ status: false, msg: "This Order is already cancelled" })
@@ -161,14 +161,17 @@ const updateOrder = async (req, res) => {
                 return res.status(400).send({ status: false, msg: "Status can only be Pending , Completed , Canceled " })
             }
         }
-        if (status == "completed" || status == "canceled") {
-            if (existOrder.cancellable == false && status == "completed") {
-                return res.status(400).send({ status: false, msg: "This order is cannot Cancel " })
+        let obj = {}
+        if (status == "canceled" || status == "completed") {
+            if (existOrder.cancellable == false && status == "canceled") {
+                return res.status(400).send({ status: false, msg: "This order  cannot be Cancelled " })
+            } else {
+                obj.status = status
             }
         }
 
         //    //-----------------------------------Update Order status--------------------->>>>>
-        let updateOrder = await orderModel.findOneAndUpdate({ _id: orderId }, { $set: data }, { new: true })
+        let updateOrder = await orderModel.findOneAndUpdate({ _id: orderId }, obj, { new: true })
         res.status(200).send({ status: true, message: "Success", Data: updateOrder })
 
     }
