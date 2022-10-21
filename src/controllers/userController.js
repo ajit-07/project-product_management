@@ -9,135 +9,101 @@ import { uploadFile } from '../aws/aws.js';
 const createUser = async (req, res) => {
     try {
         const reqBody = req.body;
-        const file = req.files;
 
-        const { fname, lname, email, profileImage, phone, password, address } = reqBody;
+        const { fname, lname, email, phone, password, address } = reqBody;
 
         //------------------------------body validation--------------------------------->
-        if (Object.keys(reqBody).length === 0)
-            return res.status(400).send({ status: false, message: `Please provide user details` });
-
-        if (Object.keys(reqBody).length > 7)
-            return res.status(400).send({ status: false, message: `You cam't add extra field` });
-
-        //------------------------------file validation--------------------------------->
-        if (!file[0])
-            return res.status(400).send({ status: false, message: `Please provide image file` });
+        if (Object.keys(reqBody).length === 0) return res.status(400).send({ status: false, message: `Please provide user details` });
 
         //------------------------------fname validation--------------------------------->
-        if (!fname)
-            return res.status(400).send({ status: false, message: `fname is required.` });
+        if (!fname) return res.status(400).send({ status: false, message: `fname is required.` });
 
-        if (!isValidName(fname))
-            return res.status(400).send({ status: false, message: ` '${fname}' this fname is not valid.` });
+        if (!isValidName(fname)) return res.status(400).send({ status: false, message: ` '${fname}' this fname is not valid.` });
 
         //------------------------------lname validation--------------------------------->
-        if (!lname)
-            return res.status(400).send({ status: false, message: `lname is required.` });
+        if (!lname) return res.status(400).send({ status: false, message: `lname is required.` });
 
-        if (!isValidName(lname))
-            return res.status(400).send({ status: false, message: ` '${lname}' this lname is not valid.` });
+        if (!isValidName(lname)) return res.status(400).send({ status: false, message: ` '${lname}' this lname is not valid.` });
 
         //------------------------------email validation--------------------------------->
-        if (!email)
-            return res.status(400).send({ status: false, message: `email is required.` });
+        if (!email) return res.status(400).send({ status: false, message: `email is required.` });
 
-        if (!isValidEmail(email))
-            return res.status(400).send({ status: false, message: ` '${email}' this email is not valid email.` });
+        if (!isValidEmail(email)) return res.status(400).send({ status: false, message: ` '${email}' this email is not valid email.` });
 
         //------------------------------phone validation--------------------------------->
-        if (!phone)
-            return res.status(400).send({ status: false, message: `phone is required.` });
+        if (!phone) return res.status(400).send({ status: false, message: `phone is required.` });
 
-        if (!isValidNumber(phone))
-            return res.status(400).send({ status: false, message: ` '${phone}' this is not valid indian phone number.` });
+        if (!isValidNumber(phone)) return res.status(400).send({ status: false, message: ` '${phone}' this is not valid indian phone number.` });
 
         //------------------------------password validation--------------------------------->
-        if (!password)
-            return res.status(400).send({ status: false, message: `password is required.` });
+        if (!password) return res.status(400).send({ status: false, message: `password is required.` });
 
-        if (!isValidPass(password))
-            return res.status(400).send({ status: false, message: `Use this combination 8-15 char & use 0-9,A-Z,a-z & special char.` });
+        if (!isValidPass(password)) return res.status(400).send({ status: false, message: `Use this combination 8-15 char & use 0-9,A-Z,a-z & special char.` });
 
         //*-----------##########----------address validation----------##############---------->
-        if (!address)
-            return res.status(400).send({ status: false, message: `address is required.` });
+        if (!address) return res.status(400).send({ status: false, message: `address is required.` });
 
         reqBody.address = JSON.parse(address)
 
         const { shipping, billing } = reqBody.address;
 
         //*----------//--------//--------shipping validation---------//----------//--------->
-        if (!shipping)
-            return res.status(400).send({ status: false, message: `shipping is required.` })
+        if (!shipping) return res.status(400).send({ status: false, message: `shipping is required.` })
 
         //-------------------------------street validation--------------------------------->
-        if (!shipping.street)
-            return res.status(400).send({ status: false, message: `street is required in shipping.` })
+        if (!shipping.street) return res.status(400).send({ status: false, message: `street is required in shipping.` })
 
-        if (!isValidTxt(shipping.street))
-            return res.status(400).send({ status: false, message: ` '${shipping.street}' this street is not valid in shipping.` })
+        if (!isValidTxt(shipping.street)) return res.status(400).send({ status: false, message: ` '${shipping.street}' this street is not valid in shipping.` })
 
         //-------------------------------city validation--------------------------------->
-        if (!shipping.city)
-            return res.status(400).send({ status: false, message: `city is required in shipping.` }); isValidPin
+        if (!shipping.city) return res.status(400).send({ status: false, message: `city is required in shipping.` }); isValidPin
 
-        if (!isValidTxt(shipping.city))
-            return res.status(400).send({ status: false, message: ` '${shipping.city}' this city is not valid in shipping.` })
+        if (!isValidTxt(shipping.city)) return res.status(400).send({ status: false, message: ` '${shipping.city}' this city is not valid in shipping.` })
 
         //-------------------------------pincode validation--------------------------------->
-        if (!shipping.pincode)
-            return res.status(400).send({ status: false, message: `pincode is required in shipping.` });
+        if (!shipping.pincode) return res.status(400).send({ status: false, message: `pincode is required in shipping.` });
 
-        if (!isValidPin(shipping.pincode))
-            return res.status(400).send({ status: false, message: ` '${shipping.pincode}' this pincode is not valid in shipping.` })
+        if (!isValidPin(shipping.pincode)) return res.status(400).send({ status: false, message: ` '${shipping.pincode}' this pincode is not valid in shipping.` })
 
         //*----------//--------//--------billing validation---------//----------//--------->
-        if (!billing)
-            return res.status(400).send({ status: false, message: `billing is required.` })
+        if (!billing) return res.status(400).send({ status: false, message: `billing is required.` })
 
         //-------------------------------street validation--------------------------------->
-        if (!billing.street)
-            return res.status(400).send({ status: false, message: `street is required in billing.` })
+        if (!billing.street) return res.status(400).send({ status: false, message: `street is required in billing.` })
 
-        if (!isValidTxt(billing.street))
-            return res.status(400).send({ status: false, message: ` '${billing.street}' this street is not valid in billing.` })
+        if (!isValidTxt(billing.street)) return res.status(400).send({ status: false, message: ` '${billing.street}' this street is not valid in billing.` })
 
         //-------------------------------city validation--------------------------------->
-        if (!billing.city)
-            return res.status(400).send({ status: false, message: `city is required in billing.` }); isValidPin
+        if (!billing.city) return res.status(400).send({ status: false, message: `city is required in billing.` }); isValidPin
 
-        if (!isValidTxt(billing.city))
-            return res.status(400).send({ status: false, message: ` '${billing.city}' this city is not valid in billing.` })
+        if (!isValidTxt(billing.city)) return res.status(400).send({ status: false, message: ` '${billing.city}' this city is not valid in billing.` })
 
         //-------------------------------pincode validation--------------------------------->
-        if (!billing.pincode)
-            return res.status(400).send({ status: false, message: `pincode is required in billing.` });
+        if (!billing.pincode) return res.status(400).send({ status: false, message: `pincode is required in billing.` });
 
-        if (!isValidPin(billing.pincode))
-            return res.status(400).send({ status: false, message: ` '${billing.pincode}' this pincode is not valid in billing.` })
+        if (!isValidPin(billing.pincode)) return res.status(400).send({ status: false, message: ` '${billing.pincode}' this pincode is not valid in billing.` })
 
         //------------------------------finding duplicate email------------------------------>
         const duplicateEmail = await userModel.findOne({ email });
 
-        if (duplicateEmail)
-            return res.status(400).send({ status: false, message: `Please login.` });
+        if (duplicateEmail) return res.status(400).send({ status: false, message: `Please login.` });
 
         //------------------------------finding duplicate phone------------------------------>
         const duplicatePhone = await userModel.findOne({ phone });
 
-        if (duplicatePhone)
-            return res.status(400).send({ status: false, message: `Please login.` });
+        if (duplicatePhone) return res.status(400).send({ status: false, message: `Please login.` });
 
         //------------------aws file uploading------------------->
-        const uploadedFileUrl = await uploadFile(file[0]);
+        let file = req.files
+        if (file.length == 0) return res.status(400).send({ status: false, message: "Profile Image file is required" })
 
-        //----------profileImage url setting in request---------->
+
+        const uploadedFileUrl = await uploadFile(file[0]);
         reqBody.profileImage = uploadedFileUrl
 
         //-------------------password hashing------------------->
-        const hashPassword = await bcrypt.hash(password, 10);
-        reqBody['password'] = hashPassword
+        const encryptPassword = await bcrypt.hash(password, 10);
+        reqBody['password'] = encryptPassword;
 
         const saveUser = await userModel.create(reqBody);
         res.status(201).send({ status: true, message: `User created successfully!!`, data: saveUser });

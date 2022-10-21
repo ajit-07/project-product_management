@@ -10,6 +10,7 @@ const ObjectId = mongoose.Types.ObjectId
 const createCart = async (req, res) => {
     try {
         const userId = req.params.userId;
+        //console.log(userId)
         const data = req.body;
 
         if (Object.keys(data).length === 0) return res.status(400).send({ status: false, message: "Request Body can't be empty" })
@@ -36,13 +37,14 @@ const createCart = async (req, res) => {
             var cartExist = await cartModel.findOne({ _id: cartId })
             if (!cartExist) return res.status(404).send({ status: false, message: "Cart not found for this given cartId" })
         }
-        console.log(cartExist)
+        //console.log(cartExist)
 
         let checkCartForUser = await cartModel.findOne({ userId: userId })//If the cart for userId exist and we don't provide the cart id in request body.
         if (checkCartForUser && !cartId) return res.status(400).send({ status: false, message: "Cart for this user is present,please provide cart Id" })
 
         if (cartExist) {
-            if (cartExist.userId.toString() !== userId) return res.status(400).send({ status: false, message: "Cart doesn't belong to the user logged in" })
+            //console.log(cartExist.userId,userId)
+            if (cartExist.userId != userId) return res.status(400).send({ status: false, message: "Cart doesn't belong to the user logged in" })
 
             let productArray = cartExist.items
             let totPrice = (cartExist.totalPrice + productExist.price)
@@ -88,6 +90,98 @@ const createCart = async (req, res) => {
 //======================================updateCart=============================================>
 const updateCart = async (req, res) => {
     try {
+        let userId = req.params.userId;
+        let data = req.body
+        let { productId, cartId, removeProduct } = req.body
+
+        // ---------checking data in request body----------
+        if (Object.keys(data).length == 0) {
+            return res.status(400).send({ status: false, message: "Please provide deatila to update the documents" });
+        }
+
+        // ------------- user validation -------------------
+        if (!isValidObjectId(userId)) {
+            return res.status(400).send({ status: false, message: "user id is not valid" })
+        }
+
+        //------------ find user in user collection --------------
+        const validUser = await userMosel.findById(userId);
+        if (!validUser) {
+            return res.status(404).send({ status: false, message: "User not present" })
+        }
+
+
+        //--------------- cart validation ---------------------
+        if (!isValid(cartId)) {
+            return res.status(400).send({ status: false, message: "Please enter cart id" })
+        }
+
+        if (!isValidObjectId(cartId)) {
+            return res.status(400).send({ status: false, message: "cart id is not valid" })
+        }
+
+        //----------------- find cartID in cart collection --------------
+        const findCart = await cartModel.findOne({ _id: cartId, userId: userId });
+        if (!findCart) {
+            return res.status(404).send({ status: false, message: "Cart not present" })
+        }
+
+
+        //------------------- product validation ------------------------
+        if (!isValid(productId)) {
+            return res.status(400).send({ status: false, message: "Please enter product id" })
+        }
+
+        if (!isValidObjectId(productId)) {
+            return res.status(400).send({ status: false, message: "product id is not valid" })
+        }
+
+        //--------------------find productId in product collection------------
+        const findProduct = await productModel.findOne({ _id: productId, isDeleted: false });
+        if (!findProduct) {
+            return res.status(404).send({ status: false, message: "Product not present" })
+        }
+
+        let items = findCart.items
+        let productArr = items.filter(x => x.productId.toString() == productId)
+
+        if (productArr.length == 0) {
+            return res.status(404).send({ status: false, message: "Product is not present in cart" })
+        }
+
+        let index = items.indexOf(productArr[0])
+
+        //-------------- removeProduct validation -----------------------
+        if (!isValid(removeProduct)) {
+            return res.status(400).send({ status: false, message: "plz enter removeProduct" })
+        }
+
+        if (removeProduct != 1 && removeProduct != 0) {
+            return res.status(400).send({ status: false, message: "Value of Removed Product Must be 0 or 1." })
+        }
+
+        if (removeProduct == 0) {
+            findCart.totalPrice = (findCart.totalPrice - (findProduct.price * findCart.items[index].quantity)).toFixed(2)
+
+            findCart.items.splice(index, 1)
+
+            findCart.totalItems = findCart.items.length
+
+            findCart.save()
+
+        }
+
+        if (removeProduct == 1) {
+            findCart.items[index].quantity -= 1
+            findCart.totalPrice = (findCart.totalPrice - findProduct.price).toFixed(2)
+
+            if (findCart.items[index].quantity == 0) {
+                findCart.items.splice(index, 1)
+            }
+            findCart.totalItems = findCart.items.length
+            findCart.save()
+        }
+        return res.status(200).send({ status: true, message: "Success", data: findCart })
 
     }
     catch (err) {
