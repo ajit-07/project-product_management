@@ -3,7 +3,7 @@ const ObjectId = mongoose.Schema.Types.ObjectId
 
 const orderSchema = new mongoose.Schema(
     {
-        userId: { type: ObjectId, ref: 'user', required: true, trim: true },
+        userId: { type: ObjectId, ref: 'User', required: true, trim: true },
         items: [{
             productId: { type: ObjectId, ref: 'Product', required: true, trim: true },
             quantity: { type: Number, required: true, min: 1 }
@@ -12,7 +12,7 @@ const orderSchema = new mongoose.Schema(
         totalItems: { type: Number, required: true },   // comment: "Holds total number of items in the cart"
         totalQuantity: { type: Number, required: true },  //comment: "Holds total number of quantity in the cart"
         cancellable: { type: Boolean, default: true },
-        status: { type: String, default: 'pending', enum: ['pending', 'completed', 'canceled'] },
+        status: { type: String, default: 'pending', enum: ['pending', 'completed', 'cancelled'] },
         deletedAt: Date,   //when the document is deleted 
         isDeleted: { type: Boolean, default: false }
     },

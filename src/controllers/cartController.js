@@ -1,6 +1,6 @@
 import cartModel from '../models/cartModel.js';
 import userMosel from '../models/userMosel.js';
-import { isValid } from '../util/validator.js';
+import { isValidField } from '../util/validator.js';
 import mongoose from 'mongoose'
 import productModel from '../models/productModel.js';
 const ObjectId = mongoose.Types.ObjectId
@@ -15,7 +15,7 @@ const createCart = async (req, res) => {
 
         if (Object.keys(data).length === 0) return res.status(400).send({ status: false, message: "Request Body can't be empty" })
 
-        if (!ObjectId.isValid(userId)) return res.status(400).send({ status: false, message: "User id should be a valid mongoose Object Id" })
+        if (!ObjectId.isValidField(userId)) return res.status(400).send({ status: false, message: "User id should be a valid mongoose Object Id" })
 
         const userExist = await userMosel.findOne({ _id: userId })
         if (!userExist) return res.status(404).send({ status: false, message: "No user found for this userId" })
@@ -23,7 +23,7 @@ const createCart = async (req, res) => {
         const { productId, cartId } = data
 
         if (!isValid(productId)) return res.status(400).send({ status: false, messsage: "Product Id is required" })
-        if (!ObjectId.isValid(productId)) return res.status(400).send({ status: false, message: "Product id should be a valid mongoose Object Id" })
+        if (!ObjectId.isValidField(productId)) return res.status(400).send({ status: false, message: "Product id should be a valid mongoose Object Id" })
 
         const productExist = await productModel.findOne({ _id: productId })
         if (!productExist) return res.status(404).send({ status: false, message: "No product available for this product Id" })
@@ -32,7 +32,7 @@ const createCart = async (req, res) => {
 
         if (cartId) {
             if (!isValid(cartId)) return res.status(400).send({ status: false, message: "Please enter a valid cart Id" })
-            if (!ObjectId.isValid(cartId)) return res.status(400).send({ status: false, message: "Cart id should be a valid monggose Object Id" })
+            if (!ObjectId.isValidField(cartId)) return res.status(400).send({ status: false, message: "Cart id should be a valid monggose Object Id" })
 
             var cartExist = await cartModel.findOne({ _id: cartId })
             if (!cartExist) return res.status(404).send({ status: false, message: "Cart not found for this given cartId" })

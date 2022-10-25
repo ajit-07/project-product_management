@@ -1,5 +1,5 @@
 import productModel from '../models/productModel.js';
-import { isValidObjectId, isValid, isValidPrice, isBoolean } from '../util/validator.js';
+import {  isValidField, isValidPrice, isBoolean } from '../util/validator.js';
 import getSymbolFromCurrency from 'currency-symbol-map'
 import { uploadFile } from '../aws/aws.js';
 
