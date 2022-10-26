@@ -91,76 +91,41 @@ const createCart = async (req, res) => {
 const updateCart = async (req, res) => {
     try {
         let userId = req.params.userId;
+
+        if (!ObjectId.isValid(userId)) return res.status(400).send({ status: false, message: "User id should be a valid type mongoose object Id" })
+        let userExist = await userMosel.findById(userId)
+        if (!userExist) return res.status(404).send({ status: false, message: "User not found for the given user Id" })
+
         let data = req.body
         let { productId, cartId, removeProduct } = req.body
 
-        // ---------checking data in request body----------
-        if (Object.keys(data).length == 0) {
-            return res.status(400).send({ status: false, message: "Please provide deatila to update the documents" });
-        }
-
-        // ------------- user validation -------------------
-        if (!isValidObjectId(userId)) {
-            return res.status(400).send({ status: false, message: "user id is not valid" })
-        }
-
-        //------------ find user in user collection --------------
-        const validUser = await userMosel.findById(userId);
-        if (!validUser) {
-            return res.status(404).send({ status: false, message: "User not present" })
-        }
+        if (Object.keys(data).length == 0) return res.status(400).send({ status: false, message: "Please provide deatila to update the documents" });
 
 
-        //--------------- cart validation ---------------------
-        if (!isValid(cartId)) {
-            return res.status(400).send({ status: false, message: "Please enter cart id" })
-        }
-
-        if (!isValidObjectId(cartId)) {
-            return res.status(400).send({ status: false, message: "cart id is not valid" })
-        }
-
-        //----------------- find cartID in cart collection --------------
+        if (!isValidField(cartId)) return res.status(400).send({ status: false, message: "Please enter cart id" })
+        if (!ObjectId.isValid(cartId)) return res.status(400).send({ status: false, message: "cart id is not valid mongoose Object Id" })
         const findCart = await cartModel.findOne({ _id: cartId, userId: userId });
-        if (!findCart) {
-            return res.status(404).send({ status: false, message: "Cart not present" })
-        }
+        if (!findCart) return res.status(404).send({ status: false, message: "Cart not present for the given userId" })
 
 
-        //------------------- product validation ------------------------
-        if (!isValid(productId)) {
-            return res.status(400).send({ status: false, message: "Please enter product id" })
-        }
-
-        if (!isValidObjectId(productId)) {
-            return res.status(400).send({ status: false, message: "product id is not valid" })
-        }
-
-        //--------------------find productId in product collection------------
+        if (!isValidField(productId)) return res.status(400).send({ status: false, message: "Please enter product id" })
+        if (!ObjectId.isValid(productId)) return res.status(400).send({ status: false, message: "product id is not valid mogoose Object Id" })
         const findProduct = await productModel.findOne({ _id: productId, isDeleted: false });
-        if (!findProduct) {
-            return res.status(404).send({ status: false, message: "Product not present" })
-        }
+        if (!findProduct) return res.status(404).send({ status: false, message: "Product not present in DB for the given productId" })
 
-        let items = findCart.items
-        let productArr = items.filter(x => x.productId.toString() == productId)
 
-        if (productArr.length == 0) {
-            return res.status(404).send({ status: false, message: "Product is not present in cart" })
-        }
+        let arrayOfProducts = findCart.items.filter(x => x.productId.toString() === productId)
 
-        let index = items.indexOf(productArr[0])
+        if (arrayOfProducts.length == 0) return res.status(404).send({ status: false, message: "Product is not present in the given cart cart" })
 
-        //-------------- removeProduct validation -----------------------
-        if (!isValid(removeProduct)) {
-            return res.status(400).send({ status: false, message: "plz enter removeProduct" })
-        }
+        let index = findCart.items.indexOf(arrayOfProducts[0])
 
-        if (removeProduct != 1 && removeProduct != 0) {
-            return res.status(400).send({ status: false, message: "Value of Removed Product Must be 0 or 1." })
-        }
 
-        if (removeProduct == 0) {
+        if (!isValid(removeProduct)) return res.status(400).send({ status: false, message: "Please enter removeProduct" })
+        if (removeProduct != "1" && removeProduct != "0") return res.status(400).send({ status: false, message: "Value of Removed Product should either be 0 or 1." })
+
+
+        if (removeProduct == "0") {
             findCart.totalPrice = (findCart.totalPrice - (findProduct.price * findCart.items[index].quantity)).toFixed(2)
 
             findCart.items.splice(index, 1)
@@ -171,7 +136,7 @@ const updateCart = async (req, res) => {
 
         }
 
-        if (removeProduct == 1) {
+        if (removeProduct == "1") {
             findCart.items[index].quantity -= 1
             findCart.totalPrice = (findCart.totalPrice - findProduct.price).toFixed(2)
 

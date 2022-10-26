@@ -24,7 +24,7 @@ router.delete('/products/:productId', deleteProduct)
 router.post('/users/:userId/cart', authenticate, authorization, createCart);
 router.put('/users/:userId/cart', authenticate, authorization, updateCart);
 router.get('/users/:userId/cart', authenticate, authorization, getCart);
-router.delete('/users/:userId/cart', deleteCart);
+router.delete('/users/:userId/cart', authenticate, authorization, deleteCart);
 
 //-------------FEATURE IV - Order--------------->
 router.post('/users/:userId/orders', authenticate, authorization, createOrder);

@@ -5,17 +5,6 @@ import { uploadFile } from '../aws/aws.js';
 
 
 
-/*
-title, description
-price
-currencyId
-currencyFormat
-productImage
-style
-availableSizes
-installments
-*/
-
 
 //======================================createProduct=============================================>
 const createProduct = async (req, res) => { //DONE CREATE PRODUCT FINAL (JUST CHECK IMAGE PART)

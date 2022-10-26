@@ -17,11 +17,11 @@ const createOrder = async (req, res) => {
 
         if (!ObjectId.isValid(userId)) return res.status(400).send({ status: false, message: "user id is should be valid mongoose Object Id" })
 
-        const userExist = await userModel.findById(userId);
+        let userExist = await userModel.findById(userId);
         if (!userExist) return res.status(404).send({ status: false, message: "User not found for the given userId" })
 
 
-        const findCart = await cartModel.findOne({ userId: userId }).lean()
+        let findCart = await cartModel.findOne({ userId: userId }).lean()
         if (!findCart) return res.status(404).send({ status: false, message: "cart not found for the given user" })
 
         if (findCart.items.length === 0) return res.status(400).send({ status: false, message: "Please add products into cart to place order" })
@@ -35,7 +35,7 @@ const createOrder = async (req, res) => {
         findCart.items.forEach((p) => (totalQuantity += p.quantity))
         findCart['totalQuantity'] = totalQuantity;
 
-        const saveOrder = await orderModel.create(findCart)
+        let saveOrder = await orderModel.create(findCart)
 
         cartModel.findOneAndUpdate({ userId: userId }, { items: [], totalPrice: 0, totalItems: 0 })
 
