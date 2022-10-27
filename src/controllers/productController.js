@@ -1,5 +1,5 @@
 import productModel from '../models/productModel.js';
-import {  isValidField, isValidPrice, isBoolean } from '../util/validator.js';
+import { isValidField, isValidPrice, isBoolean, isValidFile } from '../util/validator.js';
 import getSymbolFromCurrency from 'currency-symbol-map'
 import { uploadFile } from '../aws/aws.js';
 
@@ -7,9 +7,9 @@ import { uploadFile } from '../aws/aws.js';
 
 
 //======================================createProduct=============================================>
-const createProduct = async (req, res) => { //DONE CREATE PRODUCT FINAL (JUST CHECK IMAGE PART)
+const createProduct = async (req, res) => {
 
-    const file = req.files;
+    const files = req.files;
     const data = req.body;
 
     //------------------------------body validation--------------------------------->
@@ -20,17 +20,17 @@ const createProduct = async (req, res) => { //DONE CREATE PRODUCT FINAL (JUST CH
 
     if (Object.keys(extra).length > 0) return res.status(400).send({ status: false, message: "Inavlid request body!!" })
 
-    if (!isValid(title))
+    if (!isValidField(title))
         return res.status(400).send({ status: false, message: `Title is required and should be a valid string.` })
 
 
-    if (!isValid(description))
+    if (!isValidField(description))
         return res.status(400).send({ status: false, message: `Description is required and should be a valid string.` })
 
     if (!isValidPrice(price))
         return res.status(400).send({ status: false, message: `Price is required and should be a valid price e.g(54,589.23,6726,etc).` })
 
-    if (!isValid(currencyId))
+    if (!isValidField(currencyId))
         return res.status(400).send({ status: false, message: `Currency id is required and should be a valid string.` })
 
     if (currencyId !== 'INR')
@@ -40,7 +40,7 @@ const createProduct = async (req, res) => { //DONE CREATE PRODUCT FINAL (JUST CH
     if (currencyFormat != 'INR' && currencyFormat != '₹') return res.status(400).send({ status: false, message: "Please enter a valid currency id or currency format i.e 'INR' or '₹'" })
     const symbol = getSymbolFromCurrency('INR')
     data['currencyFormat'] = symbol
-    console.log(symbol)
+    //console.log(symbol)
 
     if (isFreeShipping) {
         if (!isBoolean(isFreeShipping))
@@ -48,11 +48,11 @@ const createProduct = async (req, res) => { //DONE CREATE PRODUCT FINAL (JUST CH
     }
 
     if (style) {
-        if (!isValid(style))
+        if (!isValidField(style))
             return res.status(400).send({ status: false, message: "Style should be a valid string" })
     }
 
-    if (!isValid(availableSizes))
+    if (!isValidField(availableSizes))
         return res.status(400).send({ status: false, message: "Please enter available sizes,it is required" })
 
     if (availableSizes) {
@@ -71,10 +71,14 @@ const createProduct = async (req, res) => { //DONE CREATE PRODUCT FINAL (JUST CH
     }
 
 
-    if (!(file && file.length)) return res.status(400).send({ status: false, message: "ProductImage is required,Please upload a image file" })
+    if (files[0].fieldname !== "productImage" || files.length === 0) { return res.status(400).send({ status: false, message: "Product Image key and it's value is required" }) }
 
-    let uploadedFileUrl = await uploadFile(file[0])
-    data['productImage'] = uploadedFileUrl
+    if (files && files.length > 0) {
+        if (files.length > 1) { return res.status(400).send({ status: false, message: "You cannot upload more than one file" }) }
+        if (!isValidFile(files[0].originalname)) { return res.status(400).send({ status: false, message: "You can only upload a image file" }) }
+        data['productImage'] = await uploadFile(files[0])
+    }
+
 
     const dupTitle = await productModel.findOne({ title })
     if (dupTitle)
@@ -154,7 +158,7 @@ const getProductById = async (req, res) => { //DONE FINAL CHECK
 //======================================updateProduct=============================================>
 const updateProduct = async (req, res) => {
     try {
-        let file = req.files
+        let files = req.files
         let productId = req.params.productId;
 
         if (!productId) return res.status(400).send({ status: false, message: "Product id is required in path params" })
@@ -175,13 +179,13 @@ const updateProduct = async (req, res) => {
         let obj = {}
 
         if (title) {
-            if (!isValid(title)) return res.status(400).send({ status: false, message: "Title is required and should be valid" })
+            if (!isValidField(title)) return res.status(400).send({ status: false, message: "Title is required and should be valid" })
             const dupTitle = await productModel.findOne({ title: title })
             if (dupTitle) return res.status(400).send({ status: false, message: "Title is already present in DB" })
             obj['title'] = title
         }
         if (description) {
-            if (!isValid(description)) return res.status(400).send({ status: false, message: "Description is required and should be valid" })
+            if (!isValidField(description)) return res.status(400).send({ status: false, message: "Description is required and should be valid" })
             obj['description'] = description
         }
         if (price) {
@@ -196,27 +200,28 @@ const updateProduct = async (req, res) => {
             if (currencyFormat != 'INR' || currencyFormat != '₹') return res.status(400).send({ status: false, message: "Please enter a valid currency id or currency format i.e 'INR' or '₹'" })
             const symbol = getSymbolFromCurrency('INR')
             obj['currencyFormat'] = symbol
-            console.log(symbol)
+            //console.log(symbol)
         }
         if (isFreeShipping) {
             if (!isBoolean(isFreeShipping)) return res.status(400).send({ status: false, message: "Is free Shipping value should be boolean" })
             obj['isFreeShipping'] = isFreeShipping
         }
         if (style) {
-            if (!isValid(style)) return res.status(400).send({ status: false, message: "Style should be a valid string" })
+            if (!isValidField(style)) return res.status(400).send({ status: false, message: "Style should be a valid string" })
             obj['style'] = style
         }
-        if (installments) { //-ve values not handled
+        if (installments) {
             if (isNaN(Number(installments))) return res.status(400).send({ status: false, message: "Installments should be a valid number" })
+            if (Number(installments) < 1) return res.status(400).send({ status: false, message: "Installments can't be less than 1" })
             obj['installments'] = installments
         }
 
-
-        if (req.files && req.files.length > 0) {
-            let uploadedFileUrl = await uploadFile(file[0])
-            obj['productImage'] = uploadedFileUrl
-            console.log(uploadedFileUrl)
+        if (files && files.length > 0) {
+            if (files.length > 1) { return res.status(400).send({ status: false, message: "You cannot upload more than one file" }) }
+            if (!isValidFile(files[0].originalname)) { return res.status(400).send({ status: false, message: "You can only upload a image file" }) }
+            data['productImage'] = await uploadFile(files[0])
         }
+
 
         obj = { $set: obj }
         if (availableSizes) { //can use isvalid function for this also
