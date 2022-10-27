@@ -1,8 +1,7 @@
 const isValidField = (value) => {
-    if (!value || value === "") { return false }
     if (typeof value === "undefined" || typeof value === "null") { return false }
     if (typeof value === "string" && value.trim().length === 0) { return false }
-    if(typeof value ==="object" && Object.keys(value).length===0) {return false}
+    if (typeof value === "object" && Object.keys(value).length === 0) { return false }
     return true
 }
 

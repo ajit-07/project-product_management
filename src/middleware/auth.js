@@ -40,7 +40,7 @@ const authorization = async (req, res) => {
         if (!ObjectId.isValid(userId)) return res.status(400).send({ status: false, message: "User id should be a valid type mongoose object Id" })
 
         let userExist = await userMosel.findById(userId)
-        if (!userExist) return res.status(404).send({ status: false, message: "User not found for the given user Id" })
+        if (!userExist) return res.status(404).send({ status: false, message: `user not found through '${userId}' this userId.` })
 
 
         if (req['user'] !== userId) return res.status(403).send({ status: false, message: "Authorization failed" })
