@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import userModel from '../models/userMosel.js';
-import { isValidName, isValidEmail, isValidFile, isValidPass, isValidNumber, isValidTxt, isValidPin, isValidField } from '../util/validator.js';
+import { isValidName, isValidEmail, isValidFile, isValidPass, isValidNumber, isValidPin, isValidField } from '../util/validator.js';
 import { uploadFile } from '../aws/aws.js';
 import mongoose from 'mongoose';
 const ObjectId = mongoose.Types.ObjectId;
@@ -165,11 +165,11 @@ const getUser = async (req, res) => {
 const updateUser = async (req, res) => {
     try {
         const reqBody = req.body
-        const userId = req.params.userId
+        //const userId = req.params.userId
         const files = req.files
         let { fname, lname, email, phone, address, password } = reqBody;
 
-        if ((Object.keys(reqBody).length === 0)) return res.status(400).send({ status: false, message: `Enter at least One Field to update.` })
+        if (Object.keys(reqBody).length === 0) return res.status(400).send({ status: false, message: `Enter at least One Field to update.` })
 
         let update = {}
 
@@ -218,6 +218,48 @@ const updateUser = async (req, res) => {
             if (files.length > 1) { return res.status(400).send({ status: false, message: "You cannot upload more than one file" }) }
             if (!isValidFile(files[0].originalname)) { return res.status(400).send({ status: false, message: "You can only upload a image file" }) }
             update['profileImage'] = await uploadFile(files[0])
+        }
+
+        if (address) {
+            const { shipping, billing } = address;
+
+            if (shipping) {
+                const { street, city, pincode } = shipping;
+
+                if (street) {
+                    if (!isValidField(address.shipping.street)) { return res.status(400).send({ status: false, message: "Invalid shipping street!" }); }
+                    update["address.shipping.street"] = street;
+                }
+
+                if (city) {
+                    if (!isValidField(address.shipping.city)) { return res.status(400).send({ status: false, message: "Invalid shipping city!" }) }
+                    update["address.shipping.city"] = city;
+                }
+
+                if (pincode) {
+                    if (!isValidPin(address.shipping.pincode)) { return res.status(400).send({ status: false, message: "Invalid shipping pincode!" }) }
+                    update["address.shipping.pincode"] = pincode;
+                }
+            }
+
+            if (billing) {
+                const { street, city, pincode } = billing;
+
+                if (street) {
+                    if (!isValidField(address.billing.street)) { return res.status(400).send({ status: false, message: "Invalid billing street!" }) }
+                    update["address.billing.street"] = street;
+                }
+
+                if (city) {
+                    if (!isValidField(address.billing.city)) { return res.status(400).send({ status: false, message: "Invalid billing city!" }) }
+                    update["address.billing.city"] = city;
+                }
+
+                if (pincode) {
+                    if (!isValidPin(address.billing.pincode)) { return res.status(400).send({ status: false, message: "Invalid billing pincode!" }); }
+                    update["address.billing.pincode"] = pincode;
+                }
+            }
         }
 
 
