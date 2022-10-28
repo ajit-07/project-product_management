@@ -3,8 +3,8 @@ import bcrypt from 'bcrypt';
 import userModel from '../models/userMosel.js';
 import { isValidName, isValidEmail, isValidFile, isValidPass, isValidNumber, isValidPin, isValidField } from '../util/validator.js';
 import { uploadFile } from '../aws/aws.js';
-import mongoose from 'mongoose';
-const ObjectId = mongoose.Types.ObjectId;
+//import mongoose from 'mongoose';
+//const ObjectId = mongoose.Types.ObjectId;
 
 
 
@@ -261,8 +261,6 @@ const updateUser = async (req, res) => {
                 }
             }
         }
-
-
 
         const updatedData = await userModel.findOneAndUpdate({ _id: userId }, update, { new: true })
         return res.status(200).send({ status: true, message: "Success", data: updatedData })
