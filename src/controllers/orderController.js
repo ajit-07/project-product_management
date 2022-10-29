@@ -1,6 +1,5 @@
 import orderModel from '../models/orderModel.js';
 import { isValidField, isBoolean } from '../util/validator.js';
-import userModel from '../models/userMosel.js';
 import cartModel from '../models/cartModel.js';
 import mongoose from 'mongoose';
 const ObjectId = mongoose.Types.ObjectId;
@@ -13,20 +12,15 @@ const createOrder = async (req, res) => {
         let userId = req.params.userId
         let data = req.body
 
-        let { cancellable, ...rest } = data
-
-        if (!ObjectId.isValid(userId)) return res.status(400).send({ status: false, message: "user id is should be valid mongoose Object Id" })
-
-        let userExist = await userModel.findById(userId);
-        if (!userExist) return res.status(404).send({ status: false, message: "User not found for the given userId" })
-
+        let { cancellable } = data
 
         let findCart = await cartModel.findOne({ userId: userId }).lean()
+        console.log(findCart)
         if (!findCart) return res.status(404).send({ status: false, message: "cart not found for the given user" })
 
         if (findCart.items.length === 0) return res.status(400).send({ status: false, message: "Please add products into cart to place order" })
 
-        if (cancellable) {
+        if (cancellable || cancellable == "") {
             if (!isBoolean(cancellable)) return res.status(400).send({ status: false, message: "please enter true or false" })
         }
         findCart['cancellable'] = cancellable;
@@ -37,7 +31,7 @@ const createOrder = async (req, res) => {
 
         let saveOrder = await orderModel.create(findCart)
 
-        cartModel.findOneAndUpdate({ userId: userId }, { items: [], totalPrice: 0, totalItems: 0 })
+        await cartModel.findOneAndUpdate({ userId: userId }, { items: [], totalPrice: 0, totalItems: 0 })
 
         return res.status(201).send({ status: true, message: "Success", data: saveOrder })
 
@@ -54,12 +48,8 @@ const updateOrder = async (req, res) => {
         let userId = req.params.userId;
         let data = req.body;
 
-        if (!ObjectId.isValid(userId)) return res.status(400).send({ status: false, message: "user id is should be valid mongoose Object Id" })
 
-        const userExist = await userModel.findById(userId);
-        if (!userExist) return res.status(404).send({ status: false, message: "User not found for the given userId" })
-
-        let { orderId, status, ...rest } = data;
+        let { orderId, status } = data;
 
         if (!isValidField(orderId)) return res.status(400).send({ status: false, message: "Please enter order Id" })
 
@@ -70,6 +60,7 @@ const updateOrder = async (req, res) => {
 
         if (orderExist.status === "completed" || orderExist.status === "cancelled") return res.status(400).send({ status: false, message: `Your order has already been ${orderExist.status}` })
 
+        if (!isValidField(status)) return res.status(400).send({ status: false, message: "Status is required" })
         let enumArray = ["pending", "completed", "cancelled"]
         if (!enumArray.includes(status.trim())) return res.status(400).send({ status: false, message: `Value of status must be among from ${enumArray.join(",")}` })
 
@@ -80,7 +71,6 @@ const updateOrder = async (req, res) => {
         let updatedOrder = await orderModel.findOneAndUpdate({ _id: orderId }, { status: status }, { new: true })
 
         return res.status(200).send({ status: true, message: "Success", data: updatedOrder })
-
     }
     catch (err) {
         res.status(500).send({ status: false, error: err.message });
