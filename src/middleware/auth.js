@@ -8,13 +8,13 @@ const ObjectId = mongoose.Types.ObjectId;
 const authenticate = async (req, res, next) => {
     try {
         let token = req.headers["authorization"]
-        if (!token) return res.status(401).send({ status: false.valueOf, message: "Token is required" })
+        if (!token) return res.status(401).send({ status: false, message: "Token is required" })
 
         token = token.split(" ")
         //console.log(token)
         token = token[1]
 
-        jwt.verify(token, 'group-1', (err, decodedToken) => {
+        jwt.verify(token, 'Project-5', (err, decodedToken) => {
             if (err) {
                 //console.log(err.message)
                 let message = err.message === "jwt expired" ? "token is expired" : "token is invalid"
@@ -25,14 +25,14 @@ const authenticate = async (req, res, next) => {
             req["user"] = decodedToken.userId;
             return next();
         })
+        
     }
-
     catch (err) {
         return res.status(500).send({ staus: false, message: err.message })
     }
 }
 
-const authorization = async (req, res) => {
+const authorization = async (req, res, next) => {
     try {
 
         let userId = req.params.userId;

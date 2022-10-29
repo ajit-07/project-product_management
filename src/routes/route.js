@@ -10,7 +10,7 @@ import { authenticate, authorization } from '../middleware/auth.js';
 //--------------FEATURE I - User---------------->
 router.post('/register', createUser);
 router.post('/login', login);
-router.post('/user/:userId/profile', authenticate, authorization, getUser);
+router.get('/user/:userId/profile', authenticate, authorization, getUser);
 router.put('/user/:userId/profile', authenticate, authorization, updateUser);
 
 //-------------FEATURE II - Product--------------->
