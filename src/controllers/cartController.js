@@ -15,15 +15,10 @@ const createCart = async (req, res) => {
 
         if (Object.keys(data).length === 0) return res.status(400).send({ status: false, message: "Request Body can't be empty" })
 
-        if (!ObjectId.isValidField(userId)) return res.status(400).send({ status: false, message: "User id should be a valid mongoose Object Id" })
-
-        const userExist = await userMosel.findOne({ _id: userId })
-        if (!userExist) return res.status(404).send({ status: false, message: "No user found for this userId" })
-
         const { productId, cartId } = data
 
-        if (!isValid(productId)) return res.status(400).send({ status: false, messsage: "Product Id is required" })
-        if (!ObjectId.isValidField(productId)) return res.status(400).send({ status: false, message: "Product id should be a valid mongoose Object Id" })
+        if (!isValidField(productId)) return res.status(400).send({ status: false, messsage: "Product Id is required" })
+        if (!ObjectId.isValid(productId)) return res.status(400).send({ status: false, message: "Product id should be a valid mongoose Object Id" })
 
         const productExist = await productModel.findOne({ _id: productId })
         if (!productExist) return res.status(404).send({ status: false, message: "No product available for this product Id" })
@@ -31,8 +26,8 @@ const createCart = async (req, res) => {
         if (productExist.isDeleted === true) return res.status(400).send({ status: false, message: "This product is no longer available" })
 
         if (cartId) {
-            if (!isValid(cartId)) return res.status(400).send({ status: false, message: "Please enter a valid cart Id" })
-            if (!ObjectId.isValidField(cartId)) return res.status(400).send({ status: false, message: "Cart id should be a valid monggose Object Id" })
+            if (!isValidField(cartId)) return res.status(400).send({ status: false, message: "Please enter a valid cart Id" })
+            if (!ObjectId.isValid(cartId)) return res.status(400).send({ status: false, message: "Cart id should be a valid monggose Object Id" })
 
             var cartExist = await cartModel.findOne({ _id: cartId })
             if (!cartExist) return res.status(404).send({ status: false, message: "Cart not found for this given cartId" })
@@ -57,7 +52,7 @@ const createCart = async (req, res) => {
                     productArray[i].quantity = newQuantity
                     cartExist.totalPrice = totPrice
                     await cartExist.save()
-                    let response = await cartModel.findOne({ userId: userId }).populate('items.productId', { __v: 0, _id: 0, isDeleted: 0, createdAt: 0, deletedAt: 0, currencyId: 0, currencyFormat: 0, updatedAt: 0, availableSizes: 0 })
+                    let response = await cartModel.findOne({ userId: userId }).populate('items.productId', { title: 1, productImage: 1, price: 1 })
                     return res.status(200).send({ status: true, message: "Success", data: response })
                 }
 
@@ -66,7 +61,7 @@ const createCart = async (req, res) => {
             cartExist.totalPrice = cartExist.totalPrice + productExist.price
             cartExist.totalItems = cartExist.items.length
             await cartExist.save()
-            let response = await cartModel.findOne({ userId: userId }).populate('items.productId', { __v: 0, _id: 0, isDeleted: 0, createdAt: 0, deletedAt: 0, currencyId: 0, currencyFormat: 0, updatedAt: 0, availableSizes: 0 })
+            let response = await cartModel.findOne({ userId: userId }).populate('items.productId', { title: 1, productImage: 1, price: 1 })
             return res.status(200).send({ status: true, message: "Success", data: response })
 
         }
@@ -91,10 +86,6 @@ const createCart = async (req, res) => {
 const updateCart = async (req, res) => {
     try {
         let userId = req.params.userId;
-
-        if (!ObjectId.isValid(userId)) return res.status(400).send({ status: false, message: "User id should be a valid type mongoose object Id" })
-        let userExist = await userMosel.findById(userId)
-        if (!userExist) return res.status(404).send({ status: false, message: "User not found for the given user Id" })
 
         let data = req.body
         let { productId, cartId, removeProduct } = req.body
@@ -121,7 +112,7 @@ const updateCart = async (req, res) => {
         let index = findCart.items.indexOf(arrayOfProducts[0])
 
 
-        if (!isValid(removeProduct)) return res.status(400).send({ status: false, message: "Please enter removeProduct" })
+        if (!isValidField(removeProduct)) return res.status(400).send({ status: false, message: "Please enter removeProduct" })
         if (removeProduct != "1" && removeProduct != "0") return res.status(400).send({ status: false, message: "Value of Removed Product should either be 0 or 1." })
 
 
@@ -160,11 +151,6 @@ const getCart = async (req, res) => {
     try {
         let userId = req.params.userId;
 
-        if (!ObjectId.isValid(userId)) return res.status(400).send({ status: false, message: "User id should be a valid type mongoose object Id" })
-
-        let userExist = await userMosel.findById(userId)
-        if (!userExist) return res.status(404).send({ status: false, message: "User not found for the given user Id" })
-
         let searchCart = await cartModel.findOne({ userId: userId }).populate('items.productId', { title: 1, productImage: 1, price: 1 })
 
         if (!searchCart) return res.status(404).send({ status: false, message: "Cart not found for the given userId" })
@@ -182,11 +168,6 @@ const deleteCart = async (req, res) => {
     try {
 
         let userId = req.params.userId;
-
-        if (!ObjectId.isValid(userId)) return res.status(400).send({ status: false, message: "User id should be a valid type mongoose object Id" })
-
-        let userExist = await userMosel.findById(userId)
-        if (!userExist) return res.status(404).send({ status: false, message: "User not found for the given user Id" })
 
         let findCart = await cartModel.findOne({ userId: userId })
         if (!findCart) return res.status(404).send({ status: false, message: "Cart not found for the given userId" })
